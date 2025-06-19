@@ -21,7 +21,6 @@ Parfait pour :
 |---------------|-------------|
 | 🔍 **Génération intelligente** | Convertit une demande en texte (ex: "liste les fichiers") en commande shell valide (ex: `ls -l`) |
 | 📚 **Mode Apprentissage** | Affiche des explications détaillées sur les flags et options |
-| 🛡️ **Sandbox sécurisé** | Exécution isolée via Docker pour éviter les risques système |
 | 💬 **Historique des prompts** | Sauvegarde des requêtes pour consultation ultérieure |
 
 ## 🛠️ Stack Technique
