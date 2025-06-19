@@ -4,7 +4,7 @@
 
 # MSRGPT - Terminal Assistant 🚀
 
-**Un outil interactif pour apprendre et exécuter des commandes shell en toute sécurité**
+**Un outil interactif pour apprendre et exécuter des commandes shell en toute sécurité pour faire du scan,footprint,enum**
 
 ## 📌 Description
 MSRGPT est une application conçue pour :
