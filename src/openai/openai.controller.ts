@@ -4,6 +4,9 @@ import { OpenaiService } from './openai.service';
 import { Body, Controller, HttpStatus, Post, Request, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/users/user.entity';
+import { Repository } from 'typeorm';
 
 type OptionType = 'scan' | 'footprint' | 'enum';
 
@@ -20,19 +23,22 @@ export class OpenaiController {
 
 
 
-    constructor(private readonly openaiService:OpenaiService) {}
+    constructor(private readonly openaiService:OpenaiService ) {}
 
     @UseGuards(JwtAuthGuard)
     @Post('/chat')
     async sendPrompt(@Body() dataPrompt:DataPromptDto, @Res() res:Response,@Request() req) {
         try {
+
+            // verifier que le mail est confirmée
+            this.openaiService.confirmEmail(req.user.userId, res, req);
             // recuperer id a partie du token
             console.log(req.user);
             //verification de option envoyée est scan,footprint ou ennum
             if (OptionEnum.SCAN != dataPrompt.option && OptionEnum.FOOTPRINT != dataPrompt.option && OptionEnum.ENUM != dataPrompt.option) {
                 return res.status(HttpStatus.BAD_REQUEST).json({
                     error: true,
-                    message: "Option invalide. Les ooptions valides sont 'scan', 'footPrint' ou 'enum'."
+                    message: "Option invalide. Les options valides sont 'scan', 'footPrint' ou 'enum'."
                 });
 
             }

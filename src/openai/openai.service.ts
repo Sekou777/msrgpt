@@ -30,7 +30,41 @@ export class OpenaiService {
     // Méthode pour obtenir le nombre de prompts envoyés
     promptCompt(): number {
         return this.promptNumber + 1;
-    }   
+    }  
+    
+    async confirmEmail(userId: string, res: Response, req: any) {
+        
+        try {
+            
+              const userVerify = await this.userRepository.findOne({
+            where: {id: req.user.userId},
+        });
+        // Vérification de l'existence de l'utilisateur
+        
+
+        if(!userVerify){
+            return res.status(HttpStatus.FORBIDDEN).json({
+                error: true,
+                message: "Utilisateur non trouvé"
+            });
+        }
+        // verification que le champs emailVerify est à true
+        if(userVerify.emailVerify !== true){
+            return res.status(HttpStatus.FORBIDDEN).json({
+                error: true,
+                message: "Verifier votre boite mail pour la confirmation de votre email fourni à l'inscription avant de continuer"
+            });
+        }
+
+        } catch (error) {
+            console.log("Error:", error)
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+                error: true,
+                message: `Erreur survenu: ${error.message}`
+            })
+            
+        }
+     }
 
     async sendPrompt(prompt: string,userId: string,res:Response) {
         try {
@@ -94,13 +128,13 @@ export class OpenaiService {
             }
             await this.usageRepository.save(usage);
             
-            return res.status(HttpStatus.OK).json({
+            return {
                             error: false,
                             message: "réquete exécutée avec succès",
                             prompt: prompt,
                             data: aiResponse,
                             limite: `Vous avez utilisé ${usage.comptage_prompt} prompts aujourd'hui. Il vous reste ${5 - usage.comptage_prompt} prompts pour aujourd'hui.`,          
-                        });
+                    };
              
             
         } catch (error) {

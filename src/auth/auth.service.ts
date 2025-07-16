@@ -154,6 +154,9 @@ export class AuthService {
             // Envoi de l'email de confirmation
            await this.appService.sendEmail(email,codeOTP);
     
+           
+           delete (saveData as {password?:string}).password;
+           delete ( saveData as {codeOTP?:string}).codeOTP;
 
             return res.status(HttpStatus.CREATED).json({
                 error:false,
@@ -224,5 +227,10 @@ export class AuthService {
                 message: `Erreur survenue:  ${error.message}`
             }) 
         }
+
     }  
+
+    
+
 }
+
