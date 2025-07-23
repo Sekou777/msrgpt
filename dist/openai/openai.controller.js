@@ -13,46 +13,52 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpenaiController = void 0;
-const data_prompt_dto_1 = require("./data-prompt.dto");
-const openai_service_1 = require("./openai.service");
 const common_1 = require("@nestjs/common");
+const openai_service_1 = require("./openai.service");
+const data_prompt_dto_1 = require("./data-prompt.dto");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
-var OptionEnum;
-(function (OptionEnum) {
-    OptionEnum["SCAN"] = "scan";
-    OptionEnum["FOOTPRINT"] = "footprint";
-    OptionEnum["ENUM"] = "enum";
-})(OptionEnum || (OptionEnum = {}));
+var Option;
+(function (Option) {
+    Option["Scan"] = "Scan";
+    Option["Footprint"] = "Footprint";
+    Option["Enum"] = "Enum";
+})(Option || (Option = {}));
 let OpenaiController = class OpenaiController {
     openaiService;
     constructor(openaiService) {
         this.openaiService = openaiService;
     }
-    async sendPrompt(dataPrompt, res, req) {
+    async sendPrompt(dataprompt, res, req) {
         try {
-            console.log(req.user);
-            if (OptionEnum.SCAN != dataPrompt.option && OptionEnum.FOOTPRINT != dataPrompt.option && OptionEnum.ENUM != dataPrompt.option) {
+            console.log(dataprompt);
+            console.log(Option.Scan.toString());
+            if (dataprompt.option != Option.Scan.toString() && dataprompt.option != Option.Footprint.toString()
+                && dataprompt.option != Option.Enum.toString()) {
+                console.log('ereur de saisir');
                 return res.status(common_1.HttpStatus.BAD_REQUEST).json({
                     error: true,
-                    message: "Option invalide. Les ooptions valides sont 'scan', 'footPrint' ou 'enum'."
+                    message: "erreur de saisie, veuillez entrer l'un de ses mots: Scan, Footprint ou Enum"
                 });
             }
             let DataPromptOption;
-            if (dataPrompt.option == OptionEnum.SCAN) {
-                DataPromptOption = "Faire un scanning";
+            if (dataprompt.option == "Scan") {
+                DataPromptOption = "faire un scanning ";
             }
-            else if (dataPrompt.option == OptionEnum.FOOTPRINT) {
-                DataPromptOption = "Faire un footprint";
+            else if (dataprompt.option == "Footprint") {
+                DataPromptOption = "faire un footprinting";
             }
-            else if (dataPrompt.option == OptionEnum.ENUM) {
-                DataPromptOption = "Faire une enumération";
+            else if (dataprompt.option == "Enum") {
+                DataPromptOption = "faire une Enumeration";
             }
-            const fullPrompt = `Option sélectionnée : ${DataPromptOption}. Action : ${dataPrompt.prompt}.\nRetourne uniquement la commande à exécuter sans aucun commentaire ni explication.`;
-            return this.openaiService.sendPrompt(fullPrompt, req.user.userId, res);
+            const fullPrompt = `Option sélectionnée : ${DataPromptOption}. Action : ${dataprompt.prompt}.\nRetourne uniquement la commande à exécuter sans aucun commentaire ni explication.`;
+            const response = await this.openaiService.sendPrompt(fullPrompt, req.user.userId);
+            return res.status(common_1.HttpStatus.OK).json(response);
         }
         catch (error) {
             console.error("Erreur lors de l'envoi du pompt:", error);
-            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({ error: "Echec d'envoi du prompt" });
+            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
+                error: "Echec d'envoi du prompt"
+            });
         }
     }
 };

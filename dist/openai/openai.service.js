@@ -17,39 +17,36 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const openai_1 = require("openai");
 const prompt_entity_1 = require("../prompt/prompt.entity");
-const prompt_usage_entity_1 = require("../prompt/prompt_usage.entity");
-const user_entity_1 = require("../users/user.entity");
 const typeorm_2 = require("typeorm");
+const user_entity_1 = require("../users/user.entity");
+const prompt_usage_entity_1 = require("../prompt/prompt_usage.entity");
 let OpenaiService = class OpenaiService {
-    promptRepository;
-    userRepository;
-    usageRepository;
+    promptRespository;
+    userRespository;
+    usageRespository;
     openai;
     promptNumber;
-    constructor(promptRepository, userRepository, usageRepository) {
-        this.promptRepository = promptRepository;
-        this.userRepository = userRepository;
-        this.usageRepository = usageRepository;
-        this.openai = new openai_1.default({
+    constructor(promptRespository, userRespository, usageRespository) {
+        this.promptRespository = promptRespository;
+        this.userRespository = userRespository;
+        this.usageRespository = usageRespository;
+        this.openai = new openai_1.OpenAI({
             apiKey: process.env.OPENAI_API_KEY
         });
         this.promptNumber = 0;
     }
-    promptCompt() {
+    promptCount() {
         return this.promptNumber + 1;
     }
-    async sendPrompt(prompt, userId, res) {
+    async sendPrompt(prompt, userId) {
         try {
-            const verifyUser = await this.userRepository.findOne({
+            const verifyUser = await this.userRespository.findOne({
                 where: { id: userId },
             });
             if (!verifyUser) {
-                return res.status(common_1.HttpStatus.FORBIDDEN).json({
-                    error: true,
-                    message: "Utilisateur non trouvé"
-                });
+                throw new Error("Utilisateur non trouvé");
             }
-            let usage = await this.usageRepository.findOne({
+            let usage = await this.usageRespository.findOne({
                 where: {
                     user: { id: userId },
                     date: new Date().toISOString().split('T')[0]
@@ -57,52 +54,48 @@ let OpenaiService = class OpenaiService {
                 relations: ['user']
             });
             if (usage && usage.comptage_prompt >= 5) {
-                return res.status(common_1.HttpStatus.FORBIDDEN).json({
-                    error: true,
-                    message: "Vous avez atteint la limite de 5 prompts par jour."
-                });
+                throw new Error("Vous avez atteint la limite des 5 prompts par jour.");
             }
-            const response = await this.openai.chat.completions.create({
-                model: 'gpt-4.1',
-                messages: [{ role: 'user', content: prompt }],
+            const completion = await this.openai.chat.completions.create({
+                model: "gpt-4.1",
+                messages: [
+                    {
+                        role: "user",
+                        content: prompt,
+                    },
+                ],
             });
-            if (!response.choices?.[0]?.message?.content) {
-                return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
-                    error: true,
-                    message: 'Réponse OpenAI invalide'
-                });
+            if (!completion.choices?.[0]?.message?.content) {
+                throw new Error("Réponse OpenAI invalide");
             }
-            const aiResponse = response.choices[0].message.content;
-            const newPrompt = this.promptRepository.create({
+            const aiReponse = completion.choices[0].message.content;
+            const newPrompt = await this.promptRespository.create({
                 message: prompt,
-                reponse: aiResponse
+                reponse: aiReponse,
             });
-            await this.promptRepository.save(newPrompt);
+            await this.promptRespository.save(newPrompt);
             if (usage) {
                 usage.comptage_prompt += 1;
             }
             else {
-                usage = this.usageRepository.create({
+                usage = this.usageRespository.create({
                     user: verifyUser,
-                    date: new Date().toISOString().split('T')[0],
                     comptage_prompt: 1,
+                    date: new Date().toISOString().split('T')[0]
                 });
             }
-            await this.usageRepository.save(usage);
-            return res.status(common_1.HttpStatus.OK).json({
+            await this.usageRespository.save(usage);
+            return {
                 error: false,
-                message: "réquete exécutée avec succès",
+                message: " Prompt enregistré avec succès",
                 prompt: prompt,
-                data: aiResponse,
+                data: aiReponse,
                 limite: `Vous avez utilisé ${usage.comptage_prompt} prompts aujourd'hui. Il vous reste ${5 - usage.comptage_prompt} prompts pour aujourd'hui.`,
-            });
+            };
         }
         catch (error) {
-            console.error('Erreur:', error);
-            return res.status(common_1.HttpStatus.INTERNAL_SERVER_ERROR).json({
-                error: true,
-                message: `Erreur: ${error.message}`
-            });
+            console.log("Error:", error);
+            throw error;
         }
     }
 };

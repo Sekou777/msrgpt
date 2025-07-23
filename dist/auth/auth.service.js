@@ -135,6 +135,8 @@ let AuthService = class AuthService {
                 });
             }
             await this.appService.sendEmail(email, codeOTP);
+            delete saveData.password;
+            delete saveData.codeOTP;
             return res.status(common_1.HttpStatus.CREATED).json({
                 error: false,
                 message: 'Enregistrement effectué.',

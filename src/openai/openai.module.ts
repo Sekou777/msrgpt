@@ -8,9 +8,10 @@ import { User } from 'src/users/user.entity';
 import { Prompt_usage } from 'src/prompt/prompt_usage.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Prompt,User,Prompt_usage]), //  le module TypeOrm pour la gestion des entités
-  ],
+  imports: [ 
+    TypeOrmModule.forFeature([Prompt,User,Prompt_usage]), 
+      ], // le module TypeOrm pour la gestion des entitées
+
   controllers: [OpenaiController],
   providers: [OpenaiService,OpenAI]
 })
